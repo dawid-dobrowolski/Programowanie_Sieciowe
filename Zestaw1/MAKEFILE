@@ -1,0 +1,14 @@
+CC	:= gcc -std:gnu99 -pedantic -Wall
+.PHONE: all clean
+all: zad1.x 
+
+zad1.x: zad1.o
+zad1.o: zad1.c
+
+%.x: %.o
+		$(CC) -o $@ $^
+
+%.o: %.c
+		$(CC)	$(CFLAGS) -c	-o	$@	$<
+clean:
+	rm -f *.o *.x *.so *.a
