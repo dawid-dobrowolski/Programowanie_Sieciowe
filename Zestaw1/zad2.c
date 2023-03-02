@@ -1,13 +1,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-void drukuj(int tablica[], int liczba_elementow) {
-    for(int j=0; j < liczba_elementow; j++)
+void drukuj(int *tablica, int liczba_elementow) {
+    int * p = tablica;
+
+    while( p < tablica + liczba_elementow)
     {
-        if(tablica[j] > 10 && (tablica[j] < 100))
+        if(*p > 10 && (*p > 100))
         {
-            printf("%d \n", tablica[j]);
+            printf("%d", *p);
         }
+        ++p;
     } 
 }
 
