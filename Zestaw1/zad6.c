@@ -38,7 +38,7 @@ int main(int argc, char* argv[])
 			if(write(file_wd, buf, BUF_SIZE) == -1) 
 			{
 				perror("Error writing data to file");
-				exit(1);
+				exit(2);
 			}
 		}
 
@@ -48,13 +48,13 @@ int main(int argc, char* argv[])
 	if(close(file_rd) == -1) 
 	{
 		perror("Error closing file decriptor");
-		exit(1);
+		exit(3);
 	}
 	
 	if(close(file_wd) == -1) 
 	{
 		perror("Error closing file decriptor");
-		exit(1);
+		exit(3);
 	}
 	
 	exit(0);
