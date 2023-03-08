@@ -6,7 +6,7 @@ void drukuj(int *tablica, int liczba_elementow) {
 
     while( p < tablica + liczba_elementow)
     {
-        if(*p > 10 && (*p > 100))
+        if(*p > 10 && (*p < 100))
         {
             printf("%d", *p);
         }
