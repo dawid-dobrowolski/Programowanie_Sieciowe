@@ -1,7 +1,5 @@
-#include<stdlib.h>
 #include <stdbool.h>
-#include<stdio.h>
-#include<string.h>
+#include <stdio.h>
 
 bool printable_buf(const void *buf, int len) 
 {
@@ -21,9 +19,9 @@ int main(int argc, char* argv[])
     printf("Podaj dowolny ciag znakow :");
     scanf("%s", chars);
 
-    bool flag = printable_buf(chars, strlen(chars));
+    bool flag = printable_buf(chars, sizeof(chars));
     if(flag == true) 
-        printf("Przekazany bufor zawiera wyłacznie znaki ASCII \n");
+        printf("Przekazany bufor zawiera znaki ASCII \n");
     else 
         printf("Przekazany bufor zawiera znaki poza ASCII \n");
     return 0;
