@@ -1,15 +1,15 @@
 <h1>Zadanie 5</h1>
 <p>W dokumentacji POSIX API znajdź opisy czterech podstawowych funkcji plikowego wejścia-wyjścia, tzn. open, read, write i close. Czy zgadzają się one z tym, co pamiętasz z przedmiotu „Systemy operacyjne”? Jakie znaczenie ma wartość 0 zwrócona jako wynik funkcji read?</p>
-<p>--------------------------------------------------------------------------------------------------------</p>
+
 <h2>Funkcja open</h2>
-``
+
 	   #include <sys/types.h>
        #include <sys/stat.h>
        #include <fcntl.h>
 
        int open(const char *pathname, int flags);
        int open(const char *pathname, int flags, mode_t mode);
-``
+
 <h3>Description</h3>
 <p>The open() system call opens the file specified by pathname. If the specified file does nto exist it may 
 optionally be created by open() (if O_CREAT is specified in flags).
@@ -24,13 +24,13 @@ The argument flags must include one of the following access modes:
 <h3>Return value</h3>
 <p>Function return the new file descriptor(a nonnegative integer) or -1 if an error occurred, in which case
 errno is set appropriately.</p>
-<p>--------------------------------------------------------------------------------------------------------</p>
-<h2>Funkcja read</h2>
-``
-	#include <unistd.h>
 
-	       ssize_t read(int fd, void *buf, size_t count);  
-``
+<h2>Funkcja read</h2>
+
+		#include <unistd.h>
+
+	    ssize_t read(int fd, void *buf, size_t count);  
+
 ssize_t - signed integer data type
 <h3>Description</h3>
 <p>read() attempts to read up to count bytes from file descriptor fd, into the buffer starting at buf.
@@ -42,13 +42,13 @@ If count is zero, read() may detect the errors. In the absence of any errors, or
 <p>On success, the number of bytes read is returned(zero indicates end of file), and the file position is advanced by this number. It is not an error if this number is smaller than the number of bytes requested; this may happen for because fewer bytes are actually available right now.
 
 On error, -1 is returned and errno is set appropriately. In this case, it is left unspecified whether the file position changes.</p>
-<p>--------------------------------------------------------------------------------------------------------</p>
+
 <h2>Funkcja write</h2>
-``
+
 	#include <unistd.h>
 
-       ssize_t write(int fd, const void *buf, size_t count);
-``
+    ssize_t write(int fd, const void *buf, size_t count);
+
 <h3>Description</h3>
 <p>write() writes up to count bytes from the buffer starting at buf to the file referred to by the file descriptor fd.
 The number of bytes written may be less than count if, for example, there is insufficient space on the underlying physical medium.
@@ -58,11 +58,11 @@ For a seekable file wirting takes place at the file offset, and the file offset 
 If count is zero and fd refers to a regular file, the write() may return a failure status if one of the errors is detected. If no errors are detected, or error detection is not perfomed, 0 will be returned without causing any other effect. If count is zero and fd refers to a file other than a regular file, the results are not specified.</p>
 <p>--------------------------------------------------------------------------------------------------------</p>
 <h2>Funkcja close</h2>
-``
-#include <unistd.h>
 
-       int close(int fd);
-``
+		#include <unistd.h>
+
+        int close(int fd);
+
 <h3>Description</h3>
 <p>close() closes a file descriptor, so that it no longer refers to any file and may be reused.</p>
 <h3>Return value</h3>
