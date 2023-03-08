@@ -27,9 +27,9 @@ errno is set appropriately.</p>
 
 <h2>Funkcja read</h2>
 
-		#include <unistd.h>
+    #include <unistd.h>
 
-	    ssize_t read(int fd, void *buf, size_t count);  
+    ssize_t read(int fd, void *buf, size_t count);  
 
 ssize_t - signed integer data type
 <h3>Description</h3>
