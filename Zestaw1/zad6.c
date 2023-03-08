@@ -4,7 +4,7 @@
 #include <stdlib.h>
 
 #define RIGHTS 0644
-#define BUF_SIZE 1024
+#define BUF_SIZE 3
 
 int main(int argc, char* argv[]) 
 {
@@ -22,39 +22,41 @@ int main(int argc, char* argv[])
 		exit(1);
 	}
 	
-	if((file_wd = open(argv[2], O_WRONLY | O_EXCL, O_CREAT, RIGHTS)) == -1)
+	if((file_wd = open(argv[2], O_WRONLY | O_TRUNC | O_CREAT, RIGHTS)) == -1)
 	{
 		perror("Error open file");
 		exit(1);
 	}
 
-	int read_bytes;
+	ssize_t read_bytes;
 	char buf[BUF_SIZE];
 
 	while(1) 
 	{
-		if((read_bytes = read(file_rd, buf, BUF_SIZE) > 0)) 
-		{
-			if(write(file_wd, buf, BUF_SIZE) == -1) 
-			{
-				perror("Error writing data to file");
-				exit(2);
-			}
+		read_bytes = read(file_rd, buf, BUF_SIZE); 
+		if(read_bytes == -1) {
+			perror("Error reading data from file");
+			exit(3);
 		}
-
-		if(read_bytes == 0) break;
+		if(read_bytes == 0) break;	
+		
+		if(write(file_wd, buf, read_bytes) == -1) 
+		{
+			perror("Error writing data to file");
+			exit(2);
+		}
 	}
 
 	if(close(file_rd) == -1) 
 	{
 		perror("Error closing file decriptor");
-		exit(3);
+		exit(4);
 	}
 	
 	if(close(file_wd) == -1) 
 	{
 		perror("Error closing file decriptor");
-		exit(3);
+		exit(4);
 	}
 	
 	exit(0);
