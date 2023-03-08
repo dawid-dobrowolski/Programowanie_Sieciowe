@@ -1,7 +1,7 @@
 #include <stdbool.h>
 #include<stdio.h>
 
-bool printable_buf(const void *buf) 
+bool printable_buf(const char *buf) 
 {
     const char *p = buf;
     while(*p != '\0')
