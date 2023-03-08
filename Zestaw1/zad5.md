@@ -56,12 +56,12 @@ For a seekable file wirting takes place at the file offset, and the file offset 
 <h3>Return value</h3>
 <p>On success, the number of bytes written is returned. On error, -1 is returned, and errno is set to indicate the cause of the error.
 If count is zero and fd refers to a regular file, the write() may return a failure status if one of the errors is detected. If no errors are detected, or error detection is not perfomed, 0 will be returned without causing any other effect. If count is zero and fd refers to a file other than a regular file, the results are not specified.</p>
-<p>--------------------------------------------------------------------------------------------------------</p>
+
 <h2>Funkcja close</h2>
 
-		#include <unistd.h>
+	#include <unistd.h>
 
-        int close(int fd);
+    int close(int fd);
 
 <h3>Description</h3>
 <p>close() closes a file descriptor, so that it no longer refers to any file and may be reused.</p>
