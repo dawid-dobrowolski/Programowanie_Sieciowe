@@ -1,5 +1,4 @@
-
-﻿# Zadanie 1
+# Zadanie 1
 
 Linuksowe dystrybucje zazwyczaj zawierają program netcat (może być też dostępny pod nazwą nc) lub jego ulepszoną wersję, ncat. Pozwala on m.in. nawiązać połączenie ze wskazanym serwerem, a następnie wysyłać do niego znaki wpisywane z klawiatury; odpowiedzi zwracane przez serwer są drukowane na ekranie. Pozwala też uruchomić się w trybie serwera czekającego na połączenie na wskazanym numerze portu.
 
