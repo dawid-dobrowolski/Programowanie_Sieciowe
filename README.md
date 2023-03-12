@@ -99,3 +99,7 @@ Służy do nawiązania połączenia z zdalnym partnerem. Ma ona następujace par
 
 --
 Nie wszystkie protokoły sprawdzają czy ktoś po drugiej stronie jest. Tak jest przy TCP ale nie UDP. connect w przpadku UDP zawsze zwróci nam zero, on tylko zapamięta adres na przyszłość.
+
+
+# Wykład 2
+
