@@ -96,10 +96,65 @@ Służy do nawiązania połączenia z zdalnym partnerem. Ma ona następujace par
 * wskaźnik na początek wypełnionej stryktury adresowej ( do typu bazowego sockaddr) 
 * rozmiar ile bajtów ta struktura liczy ( jądro dzięki temu dokonuje dodatkowych sprawdzeń )
 
+Wywoływana przez klienta
 
 --
 Nie wszystkie protokoły sprawdzają czy ktoś po drugiej stronie jest. Tak jest przy TCP ale nie UDP. connect w przpadku UDP zawsze zwróci nam zero, on tylko zapamięta adres na przyszłość.
 
 
 # Wykład 2
+## Funkcje serwera
+### Funkcja socket
+Opisana wcześniej, służy do tworzenia gniazdka.
+
+### Funkcja bind
+Serwer musi ustalić jakiś numer portu, na którym klienci mogą go wywołać. Numer portu nie może być losowo wybrany, musi być znany klientom.
+
+Argumenty funkcji bind:
+* deskryptor gniazdka
+* strukturę adresową zawierającą adres który chcemy przypisac jako nasz lokalny
+
+Ustalamy port nie adres IP bo on może się zmieniać, może być uruchomiany na wielu komputerach. Drugi powód to taki, że komputer prawie zawsze ma więcej niż jeden taki adres.
+Każdy interfejs sieciowy jest związany z pewnym adresem IP, ethernet inny, wifi inne itd, możemy mieć też więcej niż jedną kartę sieciową.
+127.0.0.1 - lookback, adres lokalny, wirtualny interfejs sieciowy.
+
+Z wyżej wymienionych powodów w polu na inicjalizacje adresu IP, ustawiamy INADDR_ANY, jądro systemu będzie traktowało to jako "jestem gotów w to miejsce dopasować w to miejsce dowolny adres IP związany z lokalnym komputerem".
+
+Porty 0-1023 są zarezerwowane dla procesów z prawami administratora !!
+
+### Funkcja listen
+Przygotowujemy gniazdko do odbierania przychodzących połączeń i te połączenia odbierać. Oznacza gniazdko jako nasłuchujące i ustala długość kolejki połączeń oczekujących. 
+Prośba połączenia od klienta trafi do tej kolejki właśnie i czeka na accept()
+
+### Funkcja accept
+Funkcja accept() patrzy do kolejki, jeśli jest ktoś w kolejce to bierzemy pierwszego oczekującego, tworzymy gniazdko, które reprezentuje to połączenie z klientem !!!!!!
+Po powrocie z accept() mamy dwa gniazdka sieciowe:
+* oryginalne do nasłuchiwania
+* do rozmawiania z konkretnym klientem
+
+Można uzyskać adres klienta, który się z nami połączył, chyba że jako drugi argument damy NULL.
+Co się dzieje jeśli kolejka połączeń jest pusta ?? Zawiesi program serwera, do momentu aż klient się pojawi, jak się pojawi to nawet bez kolejki natychmiast zostanie stworzonę gniazdko sieciowe.
+
+### funkcja shutdown
+Funkcja ta to uogólnione close(), gniazdko reprezentuje dwukierunkowe połączenie, to można zamknąc je tylko w jednym kierunku, drugi pozostawiając otwarty, close() natomiast zamyka tą komunikacje w dwóch kierunkach.
+
+* SHUT_RD
+* SHUT_WR
+* SHUT_RDWR
+
+Korzystanie z SHUT_WR można w ten sposób zasygnalizować koniec wysyłanych przez nas dancyh a potem jeszcze odebrać finalną odpoweidź od procesu na drugim końcu gniazdka.
+
+## Gniazdka bezpołączeniowe
+
+Gniazdka UDP mogą wysyłać i odbierać datagramy w tzw. trybie bezpołączeniowym, w którym gniazdko nie ma ystalonego adrresu zdalnego. Każdy transmitowany datgram może mieć inny adres zdalny. 
+Mamy tylko jedno gniazdko na nim nasłuchuje i z niego odbiera datagramy i z niego wysyła datagramy. Mamy tu funkcje sendto() i recvfrom().
+W tym wypadku mając jedynie jedno gniazdko sieciowe, recvfrom i sendto zawierają adres na który wysyłamy i z którego odbieramy dany datagram.
+
+## Nieblokujące deskryptory
+Funkcja accept() jest funkcją blokującą, podobnie jest z odczytem read(), recvfrom() one się zawieszą jeśli nie było czekających danych. Domyślnie ten okres czekania jest nieskończony, można temu zaradzić.
+
+### Przestawienie deskryptora w tryb nieblokujący
+Wyciąga się flagi z deskryptora przez fcntl, pobieramy aktualnie flagi, dodajemy flagę O_NONBLOCK i ustawiamy flagi na nowo, od teraz jak coś się zawiesi choćby na chwilę to dostaniemy -1. Możemy wtedy zasypiać na 0.5 sek i próbować na nowo, nie jeset to optymalne.
+
+Drugi pomysł to ustawienie timeoutu na gniazdkach, jest to możliwe tylko na gniazdkach sieciowych. Korzystamy tu z fubkcji setsockopt().
 
