@@ -1,8 +1,3 @@
-// Szkielet serwera TCP/IPv4.
-//
-// Po podmienieniu SOCK_STREAM na SOCK_DGRAM staje się on szkieletem serwera
-// UDP/IPv4 korzystającego z gniazdek działających w trybie połączeniowym.
-
 #define _POSIX_C_SOURCE 200809L
 #include <stdbool.h>
 #include <stdio.h>
@@ -34,64 +29,65 @@ int main(int argc, char* argv[])
         perror("Wrong arguments number");
         exit(1);
     }
-    port = atoi(argv[1]);
+    port_nr = atoi(argv[1]);
+    
+    if(port_nr == 0) {
+        perror("Error converting port number");
+        exit(2);
+    }
 
     lst_sock = socket(AF_INET, SOCK_STREAM, 0);
     if (lst_sock == -1) {
         perror("socket");
-        return 1;
+        exit(3);
     }
      
     struct sockaddr_in addr = {
         .sin_family = AF_INET,
         .sin_addr = { .s_addr = htonl(INADDR_ANY) },
-        .sin_port = htons(port)
+        .sin_port = htons(port_nr)
     };
 
     rc = bind(lst_sock, (struct sockaddr *) & addr, sizeof(addr));
     if (rc == -1) {
         perror("bind");
-        return 1;
+        exit(4);
     }
 
     rc = listen(lst_sock, 10);
     if (rc == -1) {
         perror("listen");
-        return 1;
+        exit(5);
     }
 
-    char message[16] = "Hello, world!\n\n";
+    char message[] = "Hello, world!\r\n";
     bool keep_on_handling_clients = true;
     while (keep_on_handling_clients) {
 
         clnt_sock = accept(lst_sock, NULL, NULL);
         if (clnt_sock == -1) {
             perror("accept");
-            return 1;
+            exit(6);
         }
 
-        unsigned char buf[16];
-
-        memcpy(buf, message, sizeof(message));
-
-        cnt = write(clnt_sock, buf, sizeof(message));
+        cnt = write(clnt_sock, message, sizeof(message));
         if (cnt == -1) {
             perror("write");
-            return 1;
+            exit(7);
         }
 
         rc = close(clnt_sock);
         if (rc == -1) {
             perror("close");
-            return 1;
+            exit(8);
         }
     }
 
     rc = close(lst_sock);
     if (rc == -1) {
         perror("close");
-        return 1;
+        exit(9);
     }
 
-    return 0;
+    exit(0);
 }
