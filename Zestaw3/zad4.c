@@ -1,6 +1,7 @@
 #define _POSIX_C_SOURCE 200809L
-#define UDP_MAX_PAYLOAD 65507 //theoretical limit is 65535 but, due to IPv4 protocol is 65507
+#define UDP_MAX_PAYLOAD 65535
 #define PORT_NUMBER 2020
+#define INT_16LIMITER 5
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -10,6 +11,40 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <sys/time.h>
+#include <stdint.h>
+#include <limits.h>
+#include <math.h>
+
+bool atoiHandler(int number, char * numberArray, int size)
+{
+	for(int i = size-1; i >=0; i--)
+	{
+		int partialNumber = number % 10;
+		if((numberArray[i]-'0') != partialNumber)
+			return false;
+		number /= 10;
+	};
+	return true;
+}
+
+bool isOverflowForInt16Add(int wynik, int liczba)
+{
+	if(SHRT_MAX-wynik-liczba < 0)
+	{
+		return true;
+	}
+	return false;
+}
+
+bool isOverflowForInt16Sub(int wynik, int liczba)
+{
+	if(SHRT_MIN+wynik+liczba > 0)
+	{
+		return true;
+	}
+	return false;
+}
+
 
 int main(int argc, char* argv[]) 
 {
@@ -17,7 +52,8 @@ int main(int argc, char* argv[])
 	int rc;
 	bool errorFlag = false;
 	int cnt;
-	int resultNumber = 0;
+	int16_t resultNumber = 0;
+	int16_t number;
 
 	server_desc = socket(AF_INET, SOCK_DGRAM, 0);
 	if(server_desc == -1) 
@@ -40,128 +76,151 @@ int main(int argc, char* argv[])
 	}
 	while(true)
 	{
-
 		struct sockaddr_in clnt_addr;
 		socklen_t clnt_addr_lenght = sizeof(clnt_addr);
 		char buf[UDP_MAX_PAYLOAD];
-		char liczba[UDP_MAX_PAYLOAD];
-
+		char liczba[INT_16LIMITER+1];
 		cnt = recvfrom(server_desc, buf, UDP_MAX_PAYLOAD, 0, (struct sockaddr*) &clnt_addr, &clnt_addr_lenght);
 		if(cnt == -1)
 		{
 			perror("Recvfrom error");
 			exit(4);
 		}
-		// wyrazenie nie moze zawierac spacji - ascii 32
-		// moze zawierac jedynie liczby 0-9 + operatory dodawania i odejmowania
-		// czyli dozwolone znaki ascii to 43,45,48-57 oraz znaki spec. 10,13
-		// nie moze byc podwojnego operatora lub operator bez poprzedzajacej liczby 
-		// nie moze byc liczb calkowitych np -20 + 60
-		// wyrazenie puste ma byc bledem
-		// sam operator bledem
-		// przepelnienie bledem
 
-		// Sprawdzam czy datagram nie jest pusty, jeśli tak to wysyłam kod błędu
-		if(cnt != 1 && cnt != 0)
+		// check if datagram isn't empty
+		if(cnt == 1 || cnt == 0)
 		{
-			resultNumber = 0;
-			int j = 0;
-			int operator = 0;
-			memset(liczba, 0, sizeof(liczba));
-			errorFlag = false;
-			for(int i = 0; i < cnt; i++)
-		 	{
-		 		//fprintf(stderr, "Jaki wynik narazie: %d \n", resultNumber);
-		 		if((buf[i] == 32) || ((buf[i] == 43 || buf[i] == 45) && liczba[0] == '\0')) 
-		 		{
-		 			errorFlag = true;
-		 			break;
-		 		}
-		 		if(buf[i] == 10 || (buf[i] == 13 && buf[i+1] == 10))
-		 		{
-		 			if(operator == 0)
-		 			{
-		 				resultNumber = atoi(liczba);
-		 				fprintf(stderr, "Koniec ! Wynik : %d\n", resultNumber);
-		 				break;
-		 			}
-		 			if(operator == 43)
-		 			{
-		 				resultNumber += atoi(liczba);
-		 				fprintf(stderr, "Koniec ! Wynik : %d\n", resultNumber);
-		 				break;
-		 			}
-		 			if(operator == 45)
-		 			{
-		 				resultNumber -= atoi(liczba);
-		 				fprintf(stderr, "Koniec ! Wynik : %d\n", resultNumber);
-		 				break;
-		 			}
-		 		}
-		 		if(buf[i] >= 48 && buf[i] <= 57)
-		 		{
-		 			//fprintf(stderr, "Liczba ! : %d\n", buf[i]);
-		 			liczba[j] = buf[i];
-		 			//fprintf(stderr, "Co w tablicy liczb ? : %s \n", liczba);
-		 			j++;
-		 		}
-		 		if(buf[i] == 43)
-		 		{
-		 			fprintf(stderr, "Dodawanie ! : %s \n", liczba);
-		 			if(operator == 0)
-		 			{
-		 				resultNumber = atoi(liczba);
-		 			}
-		 			if(operator == 43)
-		 			{
-		 				resultNumber += atoi(liczba);
-		 			}
-		 			if(operator == 45)
-		 			{
-		 				resultNumber -= atoi(liczba);
-		 			}
-		 			memset(liczba, 0, sizeof(liczba));
-		 			j=0;
-		 			operator = 43;
-		 		}
-		 		if(buf[i] == 45)
-		 		{	
-		 			//fprintf(stderr, "Odejmowanie ! : %s \n", liczba);
-		 			if(operator == 0)
-		 			{
-		 				resultNumber = atoi(liczba);
-		 			}
-		 			if(operator == 43)
-		 			{
-		 				resultNumber += atoi(liczba);
-		 			}
-		 			if(operator == 45)
-		 			{
-		 				resultNumber -= atoi(liczba);
-		 			}
-		 			operator = 45;
-		 			memset(liczba, 0, sizeof(liczba));
-		 			j=0;
-		 		}
-		 		else {
-		 			errorFlag = true;
-		 			break;
-		 		}
-		 	}
+			errorFlag = true;
 		}
-		else
-		{
-			char errorMessage[] = "ERROR\n";
-			cnt = sendto(server_desc, errorMessage, sizeof(errorMessage), 0, (struct sockaddr*) &clnt_addr, clnt_addr_lenght);
-			if(cnt == -1)
-			{
-				perror("Sendto error");
-				exit(5);
+		else {
+				int j = 0;
+				int operator = 0;
+
+				for(int i = 0; i < cnt; i++)
+		 		{
+		 			// check if the expression doesn't contain illegal configurations
+		 			if((buf[i] == 32) || ((buf[i] == 43 || buf[i] == 45) && liczba[0] == '\0')) 
+		 			{
+		 				errorFlag = true;
+		 				break;
+		 			}
+		 			// procedure if end of datagram
+		 			else if(buf[i] == 10 || (buf[i] == 13 && buf[i+1] == 10))
+		 			{
+		 				if(operator == 0)
+		 				{
+		 					number = atoi(liczba);
+		 					if(!atoiHandler(number, liczba, j))
+		 					{
+		 						errorFlag = true;
+		 						break;
+		 					}
+							resultNumber = number;
+		 				}		
+		 				else if(operator == 43)
+		 				{
+		 					number = atoi(liczba);
+		 					if(!atoiHandler(number, liczba, j))
+		 					{
+		 						errorFlag = true;
+		 						break;
+		 					}
+		 					if(isOverflowForInt16Add(resultNumber, number))
+		 					{
+		 						errorFlag = true;
+		 						break;
+		 					}
+							resultNumber += number;
+		 				}	
+		 				else if(operator == 45)
+		 				{
+		 					number = atoi(liczba);
+		 					if(!atoiHandler(number, liczba, j))
+		 					{
+		 						errorFlag = true;
+		 						break;
+		 					}
+		 					if(isOverflowForInt16Sub(resultNumber, number))
+		 					{
+		 						errorFlag = true;
+		 						break;
+		 					}
+							resultNumber -= number;
+		 				}	
+		 				break;
+		 			}
+		 			// if digit
+		 			else if(buf[i] >= 48 && buf[i] <= 57)
+		 			{
+		 				// infinity '0' digit protection
+		 				if((buf[i] == 48 && buf[i+1] == 48) && liczba[0] == '\0') continue;
+		 				
+		 				// catch obvious overflow
+		 				if(j == INT_16LIMITER)
+		 				{
+		 					errorFlag = true;
+		 					break;
+		 				}
+		 				liczba[j] = buf[i];
+		 				j++;
+		 			}
+		 			// if operator
+		 			else if(buf[i] == 43 || buf[i] == 45)
+		 			{
+		 				if(operator == 0)
+		 				{
+		 					number = atoi(liczba);
+		 					if(!atoiHandler(number, liczba, j))
+		 					{
+		 						errorFlag = true;
+		 						break;
+		 					}
+		 					resultNumber = number;
+		 				}
+		 				if(operator == 43)
+		 				{
+		 					number = atoi(liczba);
+		 					if(!atoiHandler(number, liczba, j))
+		 					{
+		 						errorFlag = true;
+		 						break;
+		 					}
+		 					if(isOverflowForInt16Add(resultNumber, number))
+		 					{
+		 						errorFlag = true;
+		 						break;
+		 					}
+		 					resultNumber += number;
+		 				}
+		 				if(operator == 45)
+		 				{
+		 					number = atoi(liczba);
+		 					if(!atoiHandler(number, liczba, j))
+		 					{
+		 						errorFlag = true;
+		 						break;
+		 					}
+		 					if(isOverflowForInt16Sub(resultNumber, number))
+		 					{
+		 						errorFlag = true;
+		 						break;
+		 					}
+		 					resultNumber -= number;
+		 				}
+		 				memset(liczba, 0, sizeof(liczba));
+		 				j=0;
+		 				operator = buf[i];
+		 			}
+		 			else
+		 			{
+		 				errorFlag = true;
+		 				break;
+		 			}
+		 		}	
 			}
-		}
 		if(errorFlag == true)
 		{
-			char errorMessage[] = "ERROR\n";
+			char errorMessage[] = "ERROR\r\n";
 			cnt = sendto(server_desc, errorMessage, sizeof(errorMessage), 0, (struct sockaddr*) &clnt_addr, clnt_addr_lenght);
 			if(cnt == -1)
 			{
@@ -171,9 +230,17 @@ int main(int argc, char* argv[])
 		}
 		 else
 		 {
-			char result[UDP_MAX_PAYLOAD];
-			sprintf(result, "%d",resultNumber);
-			cnt = sendto(server_desc, (void *)result, sizeof(result), 0, (struct sockaddr*) &clnt_addr, clnt_addr_lenght);
+		 	int digitNumber = 0;
+		 	for(int i = resultNumber; i != 0; i /= 10)
+		 	{
+		 		digitNumber++;
+		 	}
+		 	if(resultNumber == 0) digitNumber++;
+		 	if(resultNumber < 0 ) digitNumber++;
+			char result[digitNumber + 2];
+			sprintf(result, "%d\r\n", resultNumber);
+			
+			cnt = sendto(server_desc, result, sizeof(result), 0, (struct sockaddr*) &clnt_addr, clnt_addr_lenght);
 			if(cnt == -1)
 			{
 				perror("Sendto error");
@@ -185,6 +252,9 @@ int main(int argc, char* argv[])
 				exit(6);
 			}
 		} 
+		memset(liczba, 0, sizeof(liczba));
+		errorFlag = false;
+		resultNumber = 0;
 	}
 	if(close(server_desc) == -1)
 	{
