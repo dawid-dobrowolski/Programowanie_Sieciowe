@@ -10,8 +10,6 @@
 #include <stdbool.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
-#include <sys/time.h>
-#include <stdint.h>
 #include <limits.h>
 #include <math.h>
 
@@ -52,8 +50,8 @@ int main(int argc, char* argv[])
 	int rc;
 	bool errorFlag = false;
 	int cnt;
-	int16_t resultNumber = 0;
-	int16_t number;
+	int resultNumber = 0;
+	int number;
 
 	server_desc = socket(AF_INET, SOCK_DGRAM, 0);
 	if(server_desc == -1) 
