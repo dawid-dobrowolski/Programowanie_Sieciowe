@@ -18,7 +18,7 @@ zad9_klient.x: zad9_klient.o
 zad9_klient.o: zad9_klient.c
 
 %.x: %.o
-		$(CC) -o $@ $^
+		$(CC) -o $@ $^ -lm
 
 %.o: %.c
 		$(CC) -c	-o	$@	$<
