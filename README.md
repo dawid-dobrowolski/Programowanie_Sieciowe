@@ -158,3 +158,109 @@ Wyciąga się flagi z deskryptora przez fcntl, pobieramy aktualnie flagi, dodaje
 
 Drugi pomysł to ustawienie timeoutu na gniazdkach, jest to możliwe tylko na gniazdkach sieciowych. Korzystamy tu z fubkcji setsockopt().
 
+# Wykład 3
+## Model ISO/OSI
+Model ISO/OSI jest modelem koncepcyjnym, określa w jaki sposób należy dzielić skomplikowane sieci telekomunikacyjny, aby można było zapanować nad złożonością. Model ISO/OSI proponuje podział na siedem warstw.Każda z nich kontaktuje się tylko z wartstwami sąsiednimi.
+
+Tzw. Model internetowy ma tylko cztery warstwy.
+
+## Warstwy modelu ISO/OSI
+Od najniższej do nawyższej
+1.Fizyczna
+Zagadnienia związane w jaki sposób urządzenia sieciowe są połączone, jakie medium transmisyjne są używane skrętka/światłowód. Określa się tu również w jaki sposób modulowane są te sygnały, żeby można wyrazić 0 i 1.
+
+2.Łącza danych
+
+W jaki sposób komunikują się ze sobą komputery połączone wspólnym medium transmisyjnym( połączone jakimś kablem lub łącze radiowe pozwala przesyłanie danych z jednego na drugi ze względu na niewielką odległość pomiędzy nimi.
+Jeśli są to komputery na różnych kontynentach to warstwa 2 nie ma tu nic do czynienia.
+
+Jeśli mamy jakieś medium do którego wiele urządzeń ma dostęp(np. fale radiowe) to musimy mieć sposób adresacji tych urządzeń. Nadawca nadaje infomracje trzeba wskazać kto ma to odebrać. Adres warstwy drugiej/adres łącza danych/ adres MAC.
+
+Czyli definiujemy adres MAC.
+
+Musimy zdefiniować również format ramki sieciowej.Dzisiejsze sieci są sieciami pakietowymi, wymieniamy pewne skończone porcje danych, nie są to datagramy bo jest to warstwa 4. Można na to mówić jako paczka/ ramka danych. W sieciach lokalnych Ethernet/Wifi przesyłane są ramki danych, musimy zdefiniować jak taka ramka wygląda. Jej nagłówek(adres odbiorcy, nadwacy, suma kontrolna), jeśli medium transmisyjne jest zawodne to pewnie też mechanizm odsyłania potwierdzeń, jeśli w rozsądnym czasie potwierdzenie nie wróci, to nadawca dokonuje retransmisji, tak działają bezprzewodowe sieci WiFi, w przypadku Ethernet nie ma takiego mechanizmu, ponieważ gubienie ramek jest bardzo rzadkie i nie ma to sensu.
+
+Ethernet nie daje gwarancji, że ramka nie zginie, odpowiedzialność za retransmisje jest spychana do warstw wyższych.
+
+3.Sieciowa
+
+Mamy już jakieś sieci lokalne, które chcemy połączyć w większe sieci miejskie/globalne. Tutaj wchodzi  wartswa trzecia, warstwa sieciowa. Chodzi tutaj o sieć rozległą, np. Internet. W tej warstwie działa protokół IP - Internet Protocol, zajmuje się on tym jak znaleźć ścieżkę, połączenie która pozwoli dostarczyć pakiet IP z komputera w Polsce do komputera na innym kontynencie. Pojawiają się adresy unikalne w skali globalnej, pokazują się narzędzie tzw. routery, których zadaniem jest przekazyuwanie pakietów od nadawcy poprzez kolejne routery aż do docelowego komputera(one muszą wiedzieć jakie ścieżki wybierać).
+
+4.Transportowa
+
+Tu są protokoły transportowe, do których dają nam dostęp gniazdka unixowe UDP/TCP.Tu zajmujemy się przekazywaniem danych nie od komputera do komputera lecz od działającego procesu do działającego procesu. Są różne rodzaje protkołów strumieniowe/datagramowe, dokonujące retransimsje i nie itd.
+Nie ma czegoś takiego jak niezawodny protokół transportowy. 
+O niezawodnym protkole mówi, że nam zgłosi błąd jak nie będzie w stanie nam zapewnić żeby te dane prszyszły.
+
+5.Sesji
+
+Chodzi o to żeby z komputera z pracy i z domu można kontynuować tą samą pracę korzystające z połączenia z jakimś serwerem np. bazodanowym.
+
+6.Prezentacji
+
+Straciło to w dzisiejszych czasach na znaczeniu, wszystkie systemu posiadają kodowanie UTF-8, dane są przekazywane porcjami bajtów itd. dużo ustandaryzowania.
+Wszędzie jest ASCII albo Unicode z UTF-8, nie zawsze tak było.
+
+7.Aplikacji
+
+Pojęcia specyficzne dla konkretnego zastosowania. Jeśli chcę pobierać dane z serwera to muszę zdefiniować jak będą wyglądały nazwy tych plików, jak poprosić o takie pliki itd.Pojęcia specyficzne na poziomie przesyłania plików.
+Z drugiej strony jak byśmy chcieli przesyłać listy elektroniczne to trzeba wyspecyfikowac jak takie listy się adresuje, odbiera, czy są potwierdzenia itd.
+
+Człowiek-użytkownik jest w warstwie 8.
+
+Rzeczywiste standardy:
+Warstwa 1 i 2 - Ethernet
+Warstwa 3 - IP
+Warstwa 4 i 5 - TCP I UDP
+Warstwa 7 - Poczta, WWW, SSH
+
+W rzeczywistości warstwy sąsiednie są łączone w jedną np. 1 i 2, wartstwa zazwyczaj jest samodzielna, warstwa 4 czasami ma trochę z warstwy 5. Warstwa 6 jest w zaniku, warstwa 7 to wiele protokółów z których korzystamy HTTP, SSH itd.
+
+## Adresowanie w poszczególnych warstwach
+Ethernet - 48-bitowe(6 bajtów), nadawany przez producentów sprzętu, zapewniając ich globalną unikalność.
+
+Wi-Fi - wspólna przestrzeń adresowa z Ethernet. Zaprojektowano tak, żeby mógł współistnieć z Ethernet.
+
+IPv4(warstwa trzecia) - 32 bitowe(4 bajty) przydzielane przez operatorów sieci szkieletowych(providerów internetu), przydzielona pula 
+pomiędzy kontynenty,kraje, miasta i tak w dół, aż do sieci loklanej.
+
+IPv6 - 128-bitowe(16 bajtów) jak wyżej przy IPv4.
+
+TCP - 16 bitowe numery portów, przydzielone przez IANA - Internet Assigned Numbers Authority. Istnieją "dobrze znane numery portów" np.
+80 -HTTP
+22 -SSH
+
+UDP - podobnie z odrębną przestrzeń numerów.
+Można mieć dwa procesy na tym samym porcie pod warunkiem, że jeden korzysta z TCP drugi z UDP. Inaczej ten port traktują.
+
+Warstwa 7 to dużo adresów ale między innymi poczta czy URL
+
+## Walidacja danych wejściowych
+Przy pisaniu aplikacji sieciowych obowiązuje zasada ograniczonego zaufania.Odczytywanie z gniazdek ciągi bajtów nie zawsze będą zgodne ze specyfikacją protokołu.
+
+## Automaty
+Do walidacji zapytań można użyć automatu.Deterministyczny automat skończony ( albo "skończenie stanowy") definiuje się w oparciu o:
+- zbiór symboli z których skadają się ciągi dostarczane na wejście automatu
+- zbiór stanów, w których automat może się znajdować( jeden z nich wyróżniony jako początkowy)
+- funkcje przejścia, określającą przejścia między stanami pod wpływem przetwarzanych symboli.Bierze aktualny stan, symbol z wejścia i stan do którego przejdzie.
+
+Automat maszynka która połyka następne symbole, jak zjada symbole to wykonuje pewne czynności i tak aż skończą się symbole. Mamy odpowiedź 0 1 był poprawny nie był poprawny.
+
+## Automat walidujący ciąg liczb
+
+Podstawowym typem automatu są automaty akceptujące, mający wyróżniony zbiór stanów akceptujących. Jeśli po zakończeniu przetwarzania ciągu wejściowego automat jest w jednym z tych stanów, to ciąg był poprawny.
+
+Można zaprojektować jakieś 4 stany
+I - stan początkowy
+C - ostatnio przetworzony symbol to liczba
+S - ostatnio przetworzony symbol to spacja
+ERR - poprzednio przetworzony symbol nie układają się w poprawny ciąg
+
+Jedynym stanem akceptującym jest C.
+
+## Automaty z akcjami
+Chodzi o to, żeby nie robić osobno walidacji a później jakieś akcje bo dwa razy robimy to samo często. Nie zawsze jest to możliwe, ale jeśli jest to możliwe to powinniśmy odrazu robić walidacje z akcjami, czyli korzystamy automat z akcjami, czyli nie tylko zmienia się stan automatu ale także wykonujemy dodatkowe czynności.
+
+## Automaty i przetwarzanie strumieni danych
+Podejście to wygodne jest to o protokoł korzystających z transportu strumieniowego, nie mających ograniczenia na długość przesyłanych komunikatów (np. sumator TCP).
+Wczytywanie i przetwarzanie musi być robione porcjami o rozsądnym rozmiarze. Przetwarza to co się mu udało zapisać w buforze, wczytuje kolejną porcje danych i przetwarza kolejną porcje danych.

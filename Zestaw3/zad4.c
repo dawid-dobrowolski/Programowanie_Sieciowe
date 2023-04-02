@@ -43,16 +43,22 @@ bool isOverflowForInt16Sub(int wynik, int liczba)
 	return false;
 }
 
+bool isNcat(char *buf, ssize_t datagramLength)
+{
+	if(buf[datagramLength-1] == 10) return true;
+	return false;
+}
+
 
 int main(int argc, char* argv[]) 
 {
-	int server_desc;
-	int rc;
+	int16_t server_desc;
+	int16_t rc;
 	bool errorFlag = false;
-	int cnt;
-	int resultNumber = 0;
-	int number;
-	int temp;
+	ssize_t cnt;
+	int16_t resultNumber = 0;
+	int16_t number;
+
 	server_desc = socket(AF_INET, SOCK_DGRAM, 0);
 	if(server_desc == -1) 
 	{
@@ -84,18 +90,32 @@ int main(int argc, char* argv[])
 			perror("Recvfrom error");
 			exit(4);
 		}
+		fprintf(stderr, "Ile przyszlo : %ld\n", cnt);
 
 		// check if datagram isn't empty
-		if(cnt == 1 || cnt == 0)
+		if(cnt == 0)
+		{
+			errorFlag = true;
+		}
+		if(cnt == 1 && buf[0] == 10)
+		{
+			errorFlag = true;
+		}
+		if(cnt ==2 && (buf[0] == 13 && buf[1] == 10))
 		{
 			errorFlag = true;
 		}
 		else {
 				int j = 0;
 				int operator = 0;
-
+				if(!isNcat(buf, cnt))
+				{
+					cnt+=1;
+				} 
+				fprintf(stderr, "Czy ncat : %ld\n", cnt);
 				for(int i = 0; i < cnt; i++)
 		 		{
+		 			fprintf(stderr, "%d\n", buf[i]);
 		 			// check if the expression doesn't contain illegal configurations
 		 			if((buf[i] == 32) || ((buf[i] == 43 || buf[i] == 45) && liczba[0] == '\0')) 
 		 			{
@@ -103,11 +123,12 @@ int main(int argc, char* argv[])
 		 				break;
 		 			}
 		 			// procedure if end of datagram
-		 			else if(buf[i] == 10 || (buf[i] == 13 && buf[i+1] == 10))
+		 			else if(buf[i] == 10 || (buf[i] == 13 && buf[i+1] == 10) || buf[i] == '\0')
 		 			{
 		 				if(operator == 0)
 		 				{
 		 					number = atoi(liczba);
+		 					fprintf(stderr, "Number: %d\n",number);
 		 					if(!atoiHandler(number, liczba, j))
 		 					{
 		 						errorFlag = true;
@@ -207,7 +228,7 @@ int main(int argc, char* argv[])
 		 				}
 		 				memset(liczba, 0, sizeof(liczba));
 		 				j=0;
-		 				operator = buf[i];
+		 				operator = buf[i];//jaki tu był zamysł ?
 		 			}
 		 			else
 		 			{
@@ -251,6 +272,7 @@ int main(int argc, char* argv[])
 			}
 		} 
 		memset(liczba, 0, sizeof(liczba));
+		memset(buf, 0, sizeof(buf));
 		errorFlag = false;
 		resultNumber = 0;
 	}
