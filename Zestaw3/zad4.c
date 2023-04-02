@@ -52,7 +52,7 @@ int main(int argc, char* argv[])
 	int cnt;
 	int resultNumber = 0;
 	int number;
-
+	int temp;
 	server_desc = socket(AF_INET, SOCK_DGRAM, 0);
 	if(server_desc == -1) 
 	{
